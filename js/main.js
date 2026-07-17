@@ -459,22 +459,26 @@ document.addEventListener("DOMContentLoaded", () => {
         if (entry.isIntersecting) {
           counters.forEach((counter) => {
             const target = +counter.getAttribute("data-target");
-            const duration = 2000; // 2 seconds count-up duration
-            const increment = target / (duration / 16); // ~60fps
+            const duration = 1800;
+            const start = performance.now();
 
-            let count = 0;
-            const updateCount = () => {
-              count += increment;
-              if (count < target) {
-                counter.textContent =
-                  Math.ceil(count) + (target > 5 ? "+" : "");
-                requestAnimationFrame(updateCount);
+            const animateCounter = (now) => {
+              const progress = Math.min((now - start) / duration, 1);
+              const eased = 1 - Math.pow(1 - progress, 3);
+              const value = Math.round(target * eased);
+              counter.textContent = `${value}+`;
+
+              if (progress < 1) {
+                requestAnimationFrame(animateCounter);
               } else {
-                counter.textContent = target + "+";
+                counter.textContent = `${target}+`;
               }
             };
-            updateCount();
+
+            counter.textContent = "0+";
+            requestAnimationFrame(animateCounter);
           });
+
           statsObserver.unobserve(entry.target);
         }
       });
@@ -583,7 +587,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   filterBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
-      // Set active button style
       filterBtns.forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
 
@@ -591,20 +594,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
       projectCards.forEach((card) => {
         const cardCategory = card.getAttribute("data-category");
+        const shouldShow = filterVal === "all" || cardCategory === filterVal;
 
-        // Custom animated fade filters
-        if (filterVal === "all" || cardCategory === filterVal) {
+        if (shouldShow) {
           card.style.display = "block";
-          setTimeout(() => {
-            card.style.opacity = "1";
-            card.style.transform = "scale(1)";
-          }, 50);
+          requestAnimationFrame(() => {
+            card.classList.remove("is-hidden");
+          });
         } else {
-          card.style.opacity = "0";
-          card.style.transform = "scale(0.8)";
+          card.classList.add("is-hidden");
           setTimeout(() => {
             card.style.display = "none";
-          }, 300);
+          }, 240);
         }
       });
     });
